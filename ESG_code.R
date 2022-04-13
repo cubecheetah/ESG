@@ -5,57 +5,66 @@ setwd("/Users/sn.lili/ESG")
 library(readxl)
 ESG <- read_excel("ESG_datadata.xlsx")
 
-# converting numeric values
-ESG$GC <- as.numeric(ESG$GC)
+# We don't need some variables values
+ESG$GC <- NULL
+ESG$Similarity <- NULL
+ESG$ROIC <- NULL
+ESG$ROE <- NULL
+
+# converting numeric values and factors
 ESG$ESG <- as.numeric(ESG$ESG)
 ESG$ROA <- as.numeric(ESG$ROA)
-ESG$ROE <- as.numeric(ESG$ROE)
-ESG$ROIC <- as.numeric(ESG$ROIC)
+ESG$ROE <- as.numeric(ESG$ROE) # In case we need it
+ESG$ROIC <- as.numeric(ESG$ROIC) # In case we need it
+ESG$GC <- as.numeric(ESG$GC)
 ESG$Industry <- as.factor(ESG$Industry)
 ESG$Continent <- as.factor(ESG$Continent)
 ESG$Sector <- as.factor(ESG$Sector)
 ESG$Country <- as.factor(ESG$Country)
 
+# Corrplot
+library(corrplot)
+M <- cor(ESG[3:7]) # only usable if no columns were removed
+corrplot(M, method = 'number') 
+# Strong correlation between GC and ESG, but weak (positive) association between ROA and ESG
+# Almost 0 correlation between ROE, ROIC and the other variables
+
 # Dealing with outliers and NA values
-boxplot(ESG$ESG) 
-ESG <- ESG[complete.cases(ESG), ] # remove NA values
-row_sub <-  apply(ESG, 1, function(row) all(row !=0 ))
-ESG <- ESG[row_sub,]
-ESG[ESG==0] <- NA # The 0s have been removed
+boxplot(ESG$ESG)
+ESG[ESG==0] <- NA # The 0s will be converted to NAs
+ESG <- ESG[complete.cases(ESG), ] # and removed from the df
 
 # Data visualisation
-esquisse::esquisser()
+esquisse::esquisser() # There is a ROA outlier (AirAsia with -5000 ROA)
+ESG <- ESG[-c(29), ] # drop the 29th row
+
 
 # Check distributions
 library("car")
-qqPlot(ESG$ESG) # Normal
+qqPlot(ESG$ESG) # Looks normal
 qqPlot(ESG$ROA) # Not normal
-qqPlot(ESG$ROE) # 262 is an outlier, should be removed
-qqPlot(ESG$ROIC) # 556 is an outlier, should be removed
 
 # KStest
-ks.test(ESG$ESG, "pnorm", mean=mean_esg, sd=stdev_esg) # p value is greater than 0.05 <- normally distributed
+ks.test(ESG$ESG, "pnorm", mean=mean(ESG$ESG), sd=sd(ESG$ESG)) # p value is greater than 0.05 <- normally distributed
 ks.test(ESG$ROA, "pnorm", mean=mean(ESG$ROA), sd=sd(ESG$ROA)) # p value is smaller than 0.05 <- not normal
-ks.test(ESG$ROE, "pnorm", mean=mean(ESG$ROE), sd=sd(ESG$ROE)) # p value is smaller than 0.05 <- not normal
-ks.test(ESG$ROIC, "pnorm", mean=mean(ESG$ROIC), sd=sd(ESG$ROIC)) # p value is smaller than 0.05 <- not normal
 
-hist(log(ESG$ROA)) # better, we should use logarithmic transformation on the financial indicators
+hist(ESG$ROA) # we should transform it or remove outliers(?)
 
 # Descriptive statistics
-desc <- summary(ESG) # North america and Asia have the most data, there is only 1 for Australia and Africa (delete them?)
+summary(ESG) # North america and Asia have the most data, there is only 1 for Australia and Africa (consider deleting them?)
 
 # Model
 
-# First we regress the ESG on the log of ROA
+# First we regress the ESG on ROA
 model_1 <- lm(ESG ~ ROA, data = ESG)
 summary(model_1)
 
 model_2 <- lm(ESG ~ ROA + Industry, data = ESG)
 summary(model_2)
 
-model_3 <- lm(ESG ~ Industry, data = ESG)
+model_3 <- lm(ESG ~ ROA + Industry + Continent, data = ESG)
 summary(model_3)
-
+# The R^2 is still quite low idk what to do :/
 
 
 
