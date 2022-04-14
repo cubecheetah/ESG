@@ -33,7 +33,7 @@ corrplot(M, method = 'number')
 boxplot(ESG$ESG)
 ESG[ESG==0] <- NA # The 0s will be converted to NAs
 ESG <- ESG[complete.cases(ESG), ] # and removed from the df
-
+summary(ESG)
 # Data visualisation
 esquisse::esquisser() # There is a ROA outlier (AirAsia with -5000 ROA)
 
@@ -64,7 +64,7 @@ ks.test(ESG$ROA, "pnorm", mean=mean(ESG$ROA), sd=sd(ESG$ROA)) # p value is small
 hist(ESG$ROA) # we should transform it or remove outliers(?)
 
 # Descriptive statistics
-summary(ESG) # North america and Asia have the most data, there is only 1 for Australia and Africa (consider deleting them?)
+summary <- summary(ESG) # North america and Asia have the most data, there is only 1 for Australia and Africa (consider deleting them?)
 
 # Model
 
@@ -77,7 +77,39 @@ summary(model_2)
 
 model_3 <- lm(ESG ~ ROA + Industry + Continent, data = ESG)
 summary(model_3)
-# The R^2 is still quite low idk what to do :/ add size of firm or age of firm (?)
+# The R^2 is still quite low idk what to do :/ add size of firm or age of firm (?) or sample
 
 
 
+# Adding dummies for mandatory ESG reporting (after Krueger et al. 2021)
+ESG$mand <- ifelse(ESG$Country == "Argentina" | ESG$Country == "Australia" 
+                   | ESG$Country == "Austria"| ESG$Country == "Canada" | ESG$Country == "Chile" 
+                   | ESG$Country == "China" | ESG$Country == "Germany" | ESG$Country == "Greece"| 
+                           ESG$Country == "Hong Kong"| ESG$Country == "Hungary"| ESG$Country == "Indonesia"| 
+                           ESG$Country == "Ireland"| ESG$Country == "Italy"| ESG$Country == "India"|
+                           ESG$Country == "Malaysia"| ESG$Country == "Netherlands"
+                   | ESG$Country == "Norway" | ESG$Country == "Pakistan" | ESG$Country == "Peru"
+                   | ESG$Country == "Philippines" | ESG$Country == "Poland"| ESG$Country == "Portugal"
+                   | ESG$Country == "Singapore" | ESG$Country == "Slovenia" | ESG$Country == "South Africa"
+                   | ESG$Country == "Spain"| ESG$Country == "Turkey"| ESG$Country == "United Kingdom"
+                   | ESG$Country == "Taiwan, Province of China", 1, 0)
+
+model_mand <- lm(ESG ~ ROA + mand + Industry + Continent, data = ESG)
+summary(model_mand) # it has negative explanatory power? why :O
+
+
+electronics <- ESG[ which(ESG$Industry =='Electronic Technology'), ]
+model_electronics <- lm(ESG ~ ROA + Country + mand, data = electronics)
+summary(model_electronics) # The R2 is 0.3, amazing
+
+finance <- ESG[ which(ESG$Industry =='Finance'), ]
+model_finance <- lm(ESG ~ ROA + Country + mand, data = finance)
+summary(model_finance) # ooh wow
+
+europe <- ESG[ which(ESG$Continent =='Europe'), ]
+model_europe <- lm(ESG ~ ROA + mand + Country + Industry, data = europe)
+summary(model_europe) # overspecified
+
+northam <- ESG[ which(ESG$Continent =='North America'), ]
+model_na <- lm(ESG ~ ROA + Sector + mand, data = northam)
+summary(model_na)
