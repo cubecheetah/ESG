@@ -36,7 +36,20 @@ ESG <- ESG[complete.cases(ESG), ] # and removed from the df
 
 # Data visualisation
 esquisse::esquisser() # There is a ROA outlier (AirAsia with -5000 ROA)
-ESG <- ESG[-c(29), ] # drop the 29th row
+
+library(ggplot2)
+
+ggplot(ESG) +
+ aes(x = Continent, y = ESG) +
+ geom_boxplot(shape = "circle", fill = "#112446") +
+ theme_minimal()
+
+ggplot(ESG) +
+ aes(x = Industry, y = ESG) +
+ geom_boxplot(shape = "circle", fill = "#112446") +
+ theme_minimal()
+
+ESG <- ESG[-c(29), ] # drop the 29th row as it is a negative ROA outlier
 
 
 # Check distributions
@@ -64,7 +77,7 @@ summary(model_2)
 
 model_3 <- lm(ESG ~ ROA + Industry + Continent, data = ESG)
 summary(model_3)
-# The R^2 is still quite low idk what to do :/
+# The R^2 is still quite low idk what to do :/ add size of firm or age of firm (?)
 
 
 
